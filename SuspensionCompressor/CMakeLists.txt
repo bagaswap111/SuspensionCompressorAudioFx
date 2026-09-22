@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.15)
 
 project(SuspensionCompressor VERSION 1.0.0)
 
+# Keep plugin installation within the build tree so a normal user account can build it.
+set(CMAKE_INSTALL_PREFIX "${CMAKE_BINARY_DIR}/install" CACHE PATH "Plugin install prefix" FORCE)
+
 # JUCE Framework Setup
 include(FetchContent)
 FetchContent_Declare(
@@ -19,11 +22,15 @@ juce_add_plugin(SuspensionCompressor
     NEEDS_MIDI_OUTPUT FALSE
     IS_MIDI_EFFECT FALSE
     EDITOR_WANTS_KEYBOARD_FOCUS FALSE
-    COPY_PLUGIN_AFTER_BUILD TRUE
+    COPY_PLUGIN_AFTER_BUILD FALSE
     PLUGIN_MANUFACTURER_CODE SusA
     PLUGIN_CODE SusC
+    LV2_URI "https://suspensionaudio.com/suspension-compressor"
     FORMATS VST3 Standalone AU LV2
     PRODUCT_NAME "Suspension Compressor")
+
+# Generate the plugin's JuceHeader.h after the target exists
+juce_generate_juce_header(SuspensionCompressor)
 
 target_sources(SuspensionCompressor
     PRIVATE

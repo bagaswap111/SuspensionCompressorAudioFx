@@ -90,17 +90,17 @@ SuspensionCompressorAudioProcessor::SuspensionCompressorAudioProcessor()
     apvts = std::make_unique<juce::AudioProcessorValueTreeState>(*this, nullptr, "SuspensionCompressor", std::move(layout));
     
     // Set parameter pointers
-    params.threshold = apvts->getParameterAsType<juce::AudioParameterFloat>("threshold");
-    params.ratio = apvts->getParameterAsType<juce::AudioParameterFloat>("ratio");
-    params.attack = apvts->getParameterAsType<juce::AudioParameterFloat>("attack");
-    params.release = apvts->getParameterAsType<juce::AudioParameterFloat>("release");
-    params.knee = apvts->getParameterAsType<juce::AudioParameterFloat>("knee");
-    params.makeupGain = apvts->getParameterAsType<juce::AudioParameterFloat>("makeupGain");
-    params.mix = apvts->getParameterAsType<juce::AudioParameterFloat>("mix");
-    params.damping = apvts->getParameterAsType<juce::AudioParameterFloat>("damping");
-    params.suspensionType = apvts->getParameterAsType<juce::AudioParameterChoice>("suspensionType");
-    params.autoRelease = apvts->getParameterAsType<juce::AudioParameterBool>("autoRelease");
-    params.lookAhead = apvts->getParameterAsType<juce::AudioParameterFloat>("lookAhead");
+    params.threshold = dynamic_cast<juce::AudioParameterFloat*>(apvts->getParameter("threshold"));
+    params.ratio = dynamic_cast<juce::AudioParameterFloat*>(apvts->getParameter("ratio"));
+    params.attack = dynamic_cast<juce::AudioParameterFloat*>(apvts->getParameter("attack"));
+    params.release = dynamic_cast<juce::AudioParameterFloat*>(apvts->getParameter("release"));
+    params.knee = dynamic_cast<juce::AudioParameterFloat*>(apvts->getParameter("knee"));
+    params.makeupGain = dynamic_cast<juce::AudioParameterFloat*>(apvts->getParameter("makeupGain"));
+    params.mix = dynamic_cast<juce::AudioParameterFloat*>(apvts->getParameter("mix"));
+    params.damping = dynamic_cast<juce::AudioParameterFloat*>(apvts->getParameter("damping"));
+    params.suspensionType = dynamic_cast<juce::AudioParameterChoice*>(apvts->getParameter("suspensionType"));
+    params.autoRelease = dynamic_cast<juce::AudioParameterBool*>(apvts->getParameter("autoRelease"));
+    params.lookAhead = dynamic_cast<juce::AudioParameterFloat*>(apvts->getParameter("lookAhead"));
 }
 
 SuspensionCompressorAudioProcessor::~SuspensionCompressorAudioProcessor()
@@ -245,11 +245,6 @@ void SuspensionCompressorAudioProcessor::processBlock(juce::AudioBuffer<float>& 
 }
 
 //==============================================================================
-bool SuspensionCompressorAudioProcessor::hasEditor() const
-{
-    return true;
-}
-
 juce::AudioProcessorEditor* SuspensionCompressorAudioProcessor::createEditor()
 {
     return new SuspensionCompressorAudioProcessorEditor(*this);

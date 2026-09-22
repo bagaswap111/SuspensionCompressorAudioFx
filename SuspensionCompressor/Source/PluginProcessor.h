@@ -62,6 +62,7 @@ public:
     SuspensionModel suspension;
     
     // State
+    std::unique_ptr<juce::AudioProcessorValueTreeState> apvts;
     float currentGainReduction = 0.0f;
     float leftChannelState = 0.0f;
     float rightChannelState = 0.0f;

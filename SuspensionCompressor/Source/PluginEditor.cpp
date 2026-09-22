@@ -6,122 +6,69 @@
 SuspensionCompressorAudioProcessorEditor::RotaryKnob::RotaryKnob(
     const juce::String& name, const juce::String& unit,
     float minVal, float maxVal, float defaultValue)
-    : knobName(name), unitText(unit), minValue(minVal), maxValue(maxVal), currentValue(defaultValue)
+    : knobName(name), unitText(unit)
 {
+    setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    setTextBoxStyle(juce::Slider::TextBoxBelow, false, 40, 20);
+    setRange(minVal, maxVal);
+    setValue(defaultValue, juce::dontSendNotification);
     setRepaintsOnMouseActivity(true);
 }
 
-void RotaryKnob::setAttachment(juce::SliderParameterAttachment* att)
-{
-    attachment = att;
-}
-
-void RotaryKnob::setValue(float value)
-{
-    currentValue = juce::jlimit(minValue, maxValue, value);
-    repaint();
-}
-
-void RotaryKnob::paint(juce::Graphics& g)
+void SuspensionCompressorAudioProcessorEditor::RotaryKnob::paint(juce::Graphics& g)
 {
     auto bounds = getLocalBounds().reduced(4);
     auto centre = bounds.getCentre();
     float radius = juce::jmin(bounds.getWidth(), bounds.getHeight()) / 2.0f;
-    
-    // Draw knob base (brushed aluminum)
+
     juce::ColourGradient baseGradient(
         juce::Colour(0xff5a5a5a), centre.x - radius, centre.y - radius,
         juce::Colour(0xff3a3a3a), centre.x + radius, centre.y + radius, false);
-    
+
     g.setGradientFill(baseGradient);
     g.fillEllipse(bounds.toFloat());
-    
-    // Draw border
     g.setColour(juce::Colour(0xff6a6a6a));
     g.drawEllipse(bounds.toFloat(), 2.0f);
-    
-    // Calculate angle based on value (-135 to +135 degrees)
-    float normalizedValue = (currentValue - minValue) / (maxValue - minValue);
-    float angle = -135.0f + normalizedValue * 270.0f;
-    float angleRad = juce::degreesToRadians(angle - 90.0f);
-    
-    // Draw indicator line with glow when active
-    if (isMouseOver() || isDragging)
-    {
-        // Glow effect
-        juce::DropShadow shadow(ferrariRed, 8, juce::Point<int>(0, 0), 0.5f);
-        shadow.drawForPath(g, juce::Path());
-    }
-    
-    // Indicator line
+
+    const auto value = getValue();
+    const auto minVal = getMinimum();
+    const auto maxVal = getMaximum();
+    const float normalizedValue = (value - minVal) / (maxVal - minVal);
+    const float angle = -135.0f + normalizedValue * 270.0f;
+    const float angleRad = juce::degreesToRadians(angle - 90.0f);
+
     juce::Path indicatorPath;
-    float lineLength = radius * 0.7f;
-    float innerRadius = radius * 0.3f;
-    
+    const float lineLength = radius * 0.7f;
+    const float innerRadius = radius * 0.3f;
     indicatorPath.startNewSubPath(
         centre.x + innerRadius * std::cos(angleRad),
         centre.y + innerRadius * std::sin(angleRad));
     indicatorPath.lineTo(
         centre.x + lineLength * std::cos(angleRad),
         centre.y + lineLength * std::sin(angleRad));
-    
-    g.setColour(isMouseOver() || isDragging ? ferrariRed : juce::Colour(0xffffaa00));
-    g.strokePath(indicatorPath, juce::PathStrokeType(3.0f, juce::PathStrokeType::rounded));
-    
-    // Draw value label
+
+    g.setColour(isMouseOver() ? juce::Colour(0xffdc143c) : juce::Colour(0xffffaa00));
+    g.strokePath(indicatorPath, juce::PathStrokeType(3.0f));
+
     juce::String valueText;
-    if (std::abs(currentValue) >= 100.0f)
-        valueText = juce::String(static_cast<int>(currentValue));
-    else if (std::abs(currentValue) >= 10.0f)
-        valueText = juce::String(currentValue, 1);
+    if (std::abs(value) >= 100.0f)
+        valueText = juce::String(static_cast<int>(value));
+    else if (std::abs(value) >= 10.0f)
+        valueText = juce::String(value, 1);
     else
-        valueText = juce::String(currentValue, 2);
-    
+        valueText = juce::String(value, 2);
+
     g.setColour(juce::Colours::white);
     g.setFont(juce::Font(11.0f, juce::Font::bold));
     g.drawText(valueText + " " + unitText,
                bounds.removeFromBottom(20),
                juce::Justification::centred);
-    
-    // Draw name
+
     g.setFont(juce::Font(9.0f));
     g.setColour(juce::Colour(0xffaaaaaa));
     g.drawText(knobName,
                bounds,
                juce::Justification::centredTop);
-}
-
-void RotaryKnob::mouseDown(const juce::MouseEvent& e)
-{
-    isDragging = true;
-    dragStartValue = currentValue;
-    dragStartY = e.getY();
-    mouseDrag(e);
-}
-
-void RotaryKnob::mouseDrag(const juce::MouseEvent& e)
-{
-    if (!isDragging) return;
-    
-    int deltaY = dragStartY - e.getY();
-    float range = maxValue - minValue;
-    float sensitivity = range / 200.0f; // Adjust for desired sensitivity
-    
-    float newValue = dragStartValue + deltaY * sensitivity;
-    currentValue = juce::jlimit(minValue, maxValue, newValue);
-    
-    if (attachment != nullptr)
-    {
-        float normalizedValue = (currentValue - minValue) / range;
-        attachment->setValueAsCompleteGesture(normalizedValue);
-    }
-    
-    repaint();
-}
-
-void RotaryKnob::mouseUp(const juce::MouseEvent&)
-{
-    isDragging = false;
 }
 
 //==============================================================================
@@ -172,58 +119,19 @@ SuspensionCompressorAudioProcessorEditor::SuspensionCompressorAudioProcessorEdit
     // Create attachments
     if (audioProcessor.apvts != nullptr)
     {
-        thresholdAttachment = std::make_unique<juce::SliderParameterAttachment>(
-            *audioProcessor.params.threshold,
-            [this](float value) { thresholdKnob->setValue(value); },
-            audioProcessor.apvts->getParameterAsType<juce::AudioParameterFloat>("threshold")->getValue());
-        
-        ratioAttachment = std::make_unique<juce::SliderParameterAttachment>(
-            *audioProcessor.params.ratio,
-            [this](float value) { ratioKnob->setValue(value); },
-            audioProcessor.apvts->getParameterAsType<juce::AudioParameterFloat>("ratio")->getValue());
-        
-        attackAttachment = std::make_unique<juce::SliderParameterAttachment>(
-            *audioProcessor.params.attack,
-            [this](float value) { attackKnob->setValue(value); },
-            audioProcessor.apvts->getParameterAsType<juce::AudioParameterFloat>("attack")->getValue());
-        
-        releaseAttachment = std::make_unique<juce::SliderParameterAttachment>(
-            *audioProcessor.params.release,
-            [this](float value) { releaseKnob->setValue(value); },
-            audioProcessor.apvts->getParameterAsType<juce::AudioParameterFloat>("release")->getValue());
-        
-        kneeAttachment = std::make_unique<juce::SliderParameterAttachment>(
-            *audioProcessor.params.knee,
-            [this](float value) { kneeKnob->setValue(value); },
-            audioProcessor.apvts->getParameterAsType<juce::AudioParameterFloat>("knee")->getValue());
-        
-        makeupAttachment = std::make_unique<juce::SliderParameterAttachment>(
-            *audioProcessor.params.makeupGain,
-            [this](float value) { makeupKnob->setValue(value); },
-            audioProcessor.apvts->getParameterAsType<juce::AudioParameterFloat>("makeupGain")->getValue());
-        
-        mixAttachment = std::make_unique<juce::SliderParameterAttachment>(
-            *audioProcessor.params.mix,
-            [this](float value) { mixKnob->setValue(value); },
-            audioProcessor.apvts->getParameterAsType<juce::AudioParameterFloat>("mix")->getValue());
-        
-        dampingAttachment = std::make_unique<juce::SliderParameterAttachment>(
-            *audioProcessor.params.damping,
-            [this](float value) { dampingKnob->setValue(value); },
-            audioProcessor.apvts->getParameterAsType<juce::AudioParameterFloat>("damping")->getValue());
-        
-        lookAheadAttachment = std::make_unique<juce::SliderParameterAttachment>(
-            *audioProcessor.params.lookAhead,
-            [this](float value) { lookAheadKnob->setValue(value); },
-            audioProcessor.apvts->getParameterAsType<juce::AudioParameterFloat>("lookAhead")->getValue());
-        
-        suspensionAttachment = std::make_unique<juce::SliderParameterAttachment>(
-            *audioProcessor.params.suspensionType,
-            [this](float value) { 
-                int index = static_cast<int>(value);
-                suspensionTypeCombo.setSelectedId(index + 1, juce::dontSendNotification);
-            },
-            audioProcessor.apvts->getParameterAsType<juce::AudioParameterChoice>("suspensionType")->getValue());
+        thresholdAttachment = std::make_unique<juce::SliderParameterAttachment>(*audioProcessor.params.threshold, *thresholdKnob, nullptr);
+        ratioAttachment = std::make_unique<juce::SliderParameterAttachment>(*audioProcessor.params.ratio, *ratioKnob, nullptr);
+        attackAttachment = std::make_unique<juce::SliderParameterAttachment>(*audioProcessor.params.attack, *attackKnob, nullptr);
+        releaseAttachment = std::make_unique<juce::SliderParameterAttachment>(*audioProcessor.params.release, *releaseKnob, nullptr);
+        kneeAttachment = std::make_unique<juce::SliderParameterAttachment>(*audioProcessor.params.knee, *kneeKnob, nullptr);
+        makeupAttachment = std::make_unique<juce::SliderParameterAttachment>(*audioProcessor.params.makeupGain, *makeupKnob, nullptr);
+        mixAttachment = std::make_unique<juce::SliderParameterAttachment>(*audioProcessor.params.mix, *mixKnob, nullptr);
+        dampingAttachment = std::make_unique<juce::SliderParameterAttachment>(*audioProcessor.params.damping, *dampingKnob, nullptr);
+        lookAheadAttachment = std::make_unique<juce::SliderParameterAttachment>(*audioProcessor.params.lookAhead, *lookAheadKnob, nullptr);
+
+        auto* suspensionParam = dynamic_cast<juce::AudioParameterChoice*>(audioProcessor.apvts->getParameter("suspensionType"));
+        if (suspensionParam != nullptr)
+            suspensionTypeCombo.setSelectedId (suspensionParam->getIndex() + 1, juce::dontSendNotification);
     }
     
     // Gain reduction meter
@@ -233,7 +141,7 @@ SuspensionCompressorAudioProcessorEditor::SuspensionCompressorAudioProcessorEdit
     grMeterLabel.setJustificationType(juce::Justification::centred);
     addAndMakeVisible(grMeterLabel);
     
-    grMeter.setProgress(0.0);
+    grMeterProgress = 0.0;
     grMeter.setColour(juce::ProgressBar::backgroundColourId, matteAluminum);
     grMeter.setColour(juce::ProgressBar::foregroundColourId, ferrariRed);
     addAndMakeVisible(grMeter);
@@ -260,11 +168,21 @@ SuspensionCompressorAudioProcessorEditor::~SuspensionCompressorAudioProcessorEdi
     stopTimer();
 }
 
+void SuspensionCompressorAudioProcessorEditor::comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged)
+{
+    if (comboBoxThatHasChanged == &suspensionTypeCombo)
+    {
+        const auto selectedIndex = suspensionTypeCombo.getSelectedId() - 1;
+        if (audioProcessor.params.suspensionType != nullptr)
+            *audioProcessor.params.suspensionType = selectedIndex;
+    }
+}
+
 void SuspensionCompressorAudioProcessorEditor::timerCallback()
 {
     // Update gain reduction meter
     float gr = audioProcessor.currentGainReduction;
-    grMeter.setProgress(juce::jmap(gr, 0.0f, 20.0f, 0.0, 1.0));
+    grMeterProgress = juce::jmap(gr, 0.0f, 20.0f, 0.0f, 1.0f);
     
     // Update car info based on selected suspension
     int selectedIndex = suspensionTypeCombo.getSelectedId() - 1;

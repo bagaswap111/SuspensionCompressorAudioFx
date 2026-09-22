@@ -5,7 +5,8 @@
 
 //==============================================================================
 class SuspensionCompressorAudioProcessorEditor : public juce::AudioProcessorEditor,
-                                                  private juce::Timer
+                                                  private juce::Timer,
+                                                  private juce::ComboBox::Listener
 {
 public:
     //==============================================================================
@@ -15,6 +16,7 @@ public:
     //==============================================================================
     void paint (juce::Graphics&) override;
     void resized() override;
+    void comboBoxChanged(juce::ComboBox* comboBoxThatHasChanged) override;
     
     void timerCallback() override;
 
@@ -27,32 +29,19 @@ private:
     juce::ComboBox suspensionTypeCombo;
     
     // Knobs
-    class RotaryKnob : public juce::Component
+    class RotaryKnob : public juce::Slider
     {
     public:
         RotaryKnob(const juce::String& name, const juce::String& unit,
                    float minVal, float maxVal, float defaultValue);
-        
-        void setAttachment(juce::SliderParameterAttachment* attachment);
-        void setValue(float value);
-        float getValue() const { return currentValue; }
-        
+
         void paint(juce::Graphics& g) override;
-        void mouseDown(const juce::MouseEvent& e) override;
-        void mouseDrag(const juce::MouseEvent& e) override;
-        void mouseUp(const juce::MouseEvent& e) override;
-        
         juce::String getName() const { return knobName; }
         juce::String getUnit() const { return unitText; }
-        
+
     private:
         juce::String knobName;
         juce::String unitText;
-        float minValue, maxValue, currentValue;
-        float dragStartValue;
-        int dragStartY;
-        bool isDragging = false;
-        juce::SliderParameterAttachment* attachment = nullptr;
     };
     
     std::unique_ptr<RotaryKnob> thresholdKnob;
@@ -80,21 +69,22 @@ private:
     
     // Metering
     juce::Label grMeterLabel;
-    juce::ProgressBar grMeter;
+    double grMeterProgress = 0.0;
+    juce::ProgressBar grMeter { grMeterProgress };
     
     // Info panel
     juce::Label carInfoLabel;
     juce::Label suspensionInfoLabel;
     
     // Custom colors
-    static constexpr juce::Colour carbonBlack      = juce::Colour(0xff1a1a1a);
-    static constexpr juce::Colour matteAluminum    = juce::Colour(0xff2d2d2d);
-    static constexpr juce::Colour brushedSteel     = juce::Colour(0xff4a4a4a);
-    static constexpr juce::Colour ferrariRed       = juce::Colour(0xffdc143c);
-    static constexpr juce::Colour lamboOrange      = juce::Colour(0xffff6600);
-    static constexpr juce::Colour porscheYellow    = juce::Colour(0xffffd700);
-    static constexpr juce::Colour bugattiBlue      = juce::Colour(0xff0066cc);
-    static constexpr juce::Colour astonGreen       = juce::Colour(0xff00cc66);
+    inline static const juce::Colour carbonBlack      = juce::Colour(0xff1a1a1a);
+    inline static const juce::Colour matteAluminum    = juce::Colour(0xff2d2d2d);
+    inline static const juce::Colour brushedSteel     = juce::Colour(0xff4a4a4a);
+    inline static const juce::Colour ferrariRed       = juce::Colour(0xffdc143c);
+    inline static const juce::Colour lamboOrange      = juce::Colour(0xffff6600);
+    inline static const juce::Colour porscheYellow    = juce::Colour(0xffffd700);
+    inline static const juce::Colour bugattiBlue      = juce::Colour(0xff0066cc);
+    inline static const juce::Colour astonGreen       = juce::Colour(0xff00cc66);
     
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR (SuspensionCompressorAudioProcessorEditor)
 };

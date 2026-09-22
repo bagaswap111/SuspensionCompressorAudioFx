@@ -167,6 +167,8 @@ public:
         // Calculate force based on difference between current and target
         float force = (targetReduction - position) * params.springConstant;
         
+        float acceleration = 0.0f;
+
         // Adaptive damping for magnetic/air suspension
         if (params.hasAdaptiveDamping)
         {
@@ -175,13 +177,13 @@ public:
             float adaptiveDamping = params.dampingCoeff * (1.0f + transientAmount * 0.1f);
             
             // Mass-spring-damper: m*a = F - c*v - k*x
-            float acceleration = (force - adaptiveDamping * velocity - params.springConstant * position) / params.mass;
+            acceleration = (force - adaptiveDamping * velocity - params.springConstant * position) / params.mass;
             prevForce = force;
         }
         else
         {
             // Standard mass-spring-damper equation
-            float acceleration = (force - params.dampingCoeff * velocity - params.springConstant * position) / params.mass;
+            acceleration = (force - params.dampingCoeff * velocity - params.springConstant * position) / params.mass;
         }
         
         // Integrate using semi-implicit Euler method
