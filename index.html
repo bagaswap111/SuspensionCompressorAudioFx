@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suspension Compressor - Sports Car Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 50%, #0f0f0f 100%);
+            min-height: 100vh;
+            color: #ffffff;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Header */
+        .header {
+            text-align: center;
+            padding: 30px 0;
+            border-bottom: 2px solid #4a4a4a;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            background: linear-gradient(90deg, #dc143c, #ff6600, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            text-shadow: 0 0 30px rgba(220, 20, 60, 0.5);
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: #888;
+            font-size: 1.1em;
+        }
+
+        /* Suspension Type Selector */
+        .suspension-selector {
+            background: linear-gradient(180deg, #2d2d2d 0%, #1a1a1a 100%);
+            border: 1px solid #4a4a4a;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        .suspension-selector h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 1.2em;
+        }
+
+        .selector-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .suspension-btn {
+            background: linear-gradient(180deg, #3a3a3a 0%, #2d2d2d 100%);
+            border: 2px solid #4a4a4a;
+            border-radius: 8px;
+            padding: 12px 15px;
+            color: #ccc;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 0.9em;
+            font-weight: 600;
+        }
+
+        .suspension-btn:hover {
+            border-color: #dc143c;
+            box-shadow: 0 0 15px rgba(220, 20, 60, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .suspension-btn.active {
+            background: linear-gradient(180deg, #dc143c 0%, #a00e2a 100%);
+            border-color: #ff6600;
+            color: #fff;
+            box-shadow: 0 0 20px rgba(220, 20, 60, 0.6);
+        }
+
+        /* Main Dashboard */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        @media (max-width: 1000px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Visualization Panel */
+        .viz-panel {
+            background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%);
+            border: 2px solid #4a4a4a;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .viz-panel h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .oscilloscope {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 5px;
+            height: 200px;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        .gr-meter {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 15px;
+        }
+
+        .gr-label {
+            color: #888;
+            font-size: 0.9em;
+            margin-bottom: 10px;
+        }
+
+        .gr-bar {
+            height: 30px;
+            background: #1a1a1a;
+            border-radius: 3px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .gr-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #00cc66 0%, #ffd700 50%, #dc143c 100%);
+            width: 0%;
+            transition: width 0.1s ease;
+        }
+
+        .gr-value {
+            position: absolute;
+            right: 10px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #fff;
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        /* Suspension Animation */
+        .suspension-viz {
+            background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%);
+            border: 2px solid #4a4a4a;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .suspension-viz h3 {
+            color: #ffd700;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+        }
+
+        .suspension-container {
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-radius: 5px;
+            height: 300px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .car-body {
+            position: absolute;
+            top: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 200px;
+            height: 60px;
+            background: linear-gradient(180deg, #dc143c 0%, #a00e2a 100%);
+            border-radius: 10px 10px 5px 5px;
+            transition: top 0.1s ease;
+            box-shadow: 0 0 20px rgba(220, 20, 60, 0.5);
+        }
+
+        .car-body::before {
+            content: 'CAR BODY';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: #fff;
+            font-size: 0.8em;
+            font-weight: bold;
+        }
+
+        .spring-container {
+            position: absolute;
+            top: 110px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 20px;
+        }
+
+        .spring {
+            width: 30px;
+            height: 80px;
+            background: repeating-linear-gradient(
+                180deg,
+                #4a4a4a 0px,
+                #4a4a4a 5px,
+                #2d2d2d 5px,
+                #2d2d2d 10px
+            );
+            border-radius: 3px;
+            transition: height 0.1s ease;
+        }
+
+        .damper {
+            width: 20px;
+            height: 80px;
+            background: linear-gradient(180deg, #666 0%, #333 100%);
+            border-radius: 3px;
+            position: relative;
+            transition: height 0.1s ease;
+        }
+
+        .damper::before {
+            content: '';
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 10px;
+            height: 60px;
+            background: #888;
+            border-radius: 2px;
+        }
+
+        .wheel {
+            position: absolute;
+            bottom: 50px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 80px;
+            background: radial-gradient(circle, #333 0%, #1a1a1a 70%, #0a0a0a 100%);
+            border: 3px solid #4a4a4a;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .wheel::before {
+            content: 'WHEEL';
+            color: #666;
+            font-size: 0.6em;
+        }
+
+        .suspension-stats {
+            margin-top: 15px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .stat-box {
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 5px;
+            padding: 10px;
+        }
+
+        .stat-label {
+            color: #888;
+            font-size: 0.8em;
+            margin-bottom: 5px;
+        }
+
+        .stat-value {
+            color: #ffd700;
+            font-size: 1.2em;
+            font-weight: bold;
+        }
+
+        /* Parameter Knobs */
+        .knobs-panel {
+            background: linear-gradient(180deg, #2d2d2d 0%, #1a1a1a 100%);
+            border: 2px solid #4a4a4a;
+            border-radius: 10px;
+            padding: 20px;
+        }
+
+        .knobs-panel h3 {
+            color: #ffd700;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+        }
+
+        .knobs-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 20px;
+        }
+
+        .knob-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .knob {
+            width: 80px;
+            height: 80px;
+            background: linear-gradient(180deg, #4a4a4a 0%, #2d2d2d 100%);
+            border-radius: 50%;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .knob:hover {
+            box-shadow: 0 0 20px rgba(220, 20, 60, 0.4);
+            transform: scale(1.05);
+        }
+
+        .knob-ring {
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            border-radius: 50%;
+            background: conic-gradient(
+                from 180deg,
+                #dc143c 0deg,
+                #ff6600 var(--angle, 180deg),
+                #1a1a1a var(--angle, 180deg)
+            );
+            mask: radial-gradient(transparent 55%, black 56%);
+            -webkit-mask: radial-gradient(transparent 55%, black 56%);
+        }
+
+        .knob-center {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            bottom: 15px;
+            background: linear-gradient(180deg, #3a3a3a 0%, #2d2d2d 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .knob-indicator {
+            width: 3px;
+            height: 25px;
+            background: #dc143c;
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform-origin: bottom center;
+            transform: translateX(-50%) rotate(var(--rotation, 0deg));
+            border-radius: 2px;
+            box-shadow: 0 0 10px #dc143c;
+        }
+
+        .knob-label {
+            color: #ccc;
+            font-size: 0.8em;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .knob-value {
+            color: #ffd700;
+            font-size: 0.9em;
+            font-weight: bold;
+            margin-top: 5px;
+        }
+
+        /* Preset Info */
+        .preset-info {
+            background: linear-gradient(180deg, #1a1a1a 0%, #0f0f0f 100%);
+            border: 2px solid #4a4a4a;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 20px;
+        }
+
+        .preset-info h3 {
+            color: #dc143c;
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .preset-description {
+            color: #888;
+            line-height: 1.6;
+            margin-bottom: 15px;
+        }
+
+        .preset-specs {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+        }
+
+        .spec-item {
+            background: #2d2d2d;
+            padding: 10px;
+            border-radius: 5px;
+            border-left: 3px solid #dc143c;
+        }
+
+        .spec-label {
+            color: #888;
+            font-size: 0.8em;
+        }
+
+        .spec-value {
+            color: #fff;
+            font-weight: bold;
+            font-size: 1em;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 30px 0;
+            margin-top: 30px;
+            border-top: 2px solid #4a4a4a;
+            color: #666;
+        }
+
+        /* Animations */
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px rgba(220, 20, 60, 0.6); }
+            50% { box-shadow: 0 0 30px rgba(220, 20, 60, 0.8); }
+        }
+
+        .active-animation {
+            animation: glow 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>🏎️ SUSPENSION COMPRESSOR</h1>
+            <p>Audio Compression Simulating Vehicle Suspension Dynamics</p>
+        </div>
+
+        <!-- Suspension Type Selector -->
+        <div class="suspension-selector">
+            <h3>SELECT SUSPENSION TYPE</h3>
+            <div class="selector-grid">
+                <button class="suspension-btn active" data-type="double_wishbone">Double Wishbone</button>
+                <button class="suspension-btn" data-type="macpherson">MacPherson Strut</button>
+                <button class="suspension-btn" data-type="multi_link">Multi-Link</button>
+                <button class="suspension-btn" data-type="air_suspension">Air Suspension</button>
+                <button class="suspension-btn" data-type="magnetic">Magnetic Ride</button>
+                <button class="suspension-btn" data-type="leaf_spring">Leaf Spring</button>
+                <button class="suspension-btn" data-type="torsion_beam">Torsion Beam</button>
+                <button class="suspension-btn" data-type="de_dion">De Dion Axle</button>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div class="dashboard">
+            <!-- Visualization Panel -->
+            <div class="viz-panel">
+                <h3>📊 REAL-TIME VISUALIZATION</h3>
+                <div class="oscilloscope">
+                    <canvas id="oscilloscope"></canvas>
+                </div>
+                <div class="gr-meter">
+                    <div class="gr-label">GAIN REDUCTION</div>
+                    <div class="gr-bar">
+                        <div class="gr-fill" id="grFill"></div>
+                        <div class="gr-value" id="grValue">0.0 dB</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Suspension Animation -->
+            <div class="suspension-viz">
+                <h3>🔧 SUSPENSION SIMULATION</h3>
+                <div class="suspension-container">
+                    <div class="car-body" id="carBody"></div>
+                    <div class="spring-container">
+                        <div class="spring" id="spring"></div>
+                        <div class="damper" id="damper"></div>
+                    </div>
+                    <div class="wheel" id="wheel"></div>
+                </div>
+                <div class="suspension-stats">
+                    <div class="stat-box">
+                        <div class="stat-label">SUSPENSION TRAVEL</div>
+                        <div class="stat-value" id="travelValue">0 mm</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">DAMPING FORCE</div>
+                        <div class="stat-value" id="dampingValue">0%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Parameter Knobs -->
+        <div class="knobs-panel">
+            <h3>⚙️ PARAMETER CONTROLS</h3>
+            <div class="knobs-grid">
+                <div class="knob-container">
+                    <div class="knob" id="attackKnob" data-param="attack">
+                        <div class="knob-ring"></div>
+                        <div class="knob-center">
+                            <div class="knob-indicator"></div>
+                        </div>
+                    </div>
+                    <div class="knob-label">ATTACK</div>
+                    <div class="knob-value" id="attackValue">5 ms</div>
+                </div>
+                <div class="knob-container">
+                    <div class="knob" id="releaseKnob" data-param="release">
+                        <div class="knob-ring"></div>
+                        <div class="knob-center">
+                            <div class="knob-indicator"></div>
+                        </div>
+                    </div>
+                    <div class="knob-label">RELEASE</div>
+                    <div class="knob-value" id="releaseValue">80 ms</div>
+                </div>
+                <div class="knob-container">
+                    <div class="knob" id="ratioKnob" data-param="ratio">
+                        <div class="knob-ring"></div>
+                        <div class="knob-center">
+                            <div class="knob-indicator"></div>
+                        </div>
+                    </div>
+                    <div class="knob-label">RATIO</div>
+                    <div class="knob-value" id="ratioValue">6:1</div>
+                </div>
+                <div class="knob-container">
+                    <div class="knob" id="thresholdKnob" data-param="threshold">
+                        <div class="knob-ring"></div>
+                        <div class="knob-center">
+                            <div class="knob-indicator"></div>
+                        </div>
+                    </div>
+                    <div class="knob-label">THRESHOLD</div>
+                    <div class="knob-value" id="thresholdValue">-18 dB</div>
+                </div>
+                <div class="knob-container">
+                    <div class="knob" id="kneeKnob" data-param="knee">
+                        <div class="knob-ring"></div>
+                        <div class="knob-center">
+                            <div class="knob-indicator"></div>
+                        </div>
+                    </div>
+                    <div class="knob-label">KNEE</div>
+                    <div class="knob-value" id="kneeValue">20 dB</div>
+                </div>
+                <div class="knob-container">
+                    <div class="knob" id="dampingKnob" data-param="damping">
+                        <div class="knob-ring"></div>
+                        <div class="knob-center">
+                            <div class="knob-indicator"></div>
+                        </div>
+                    </div>
+                    <div class="knob-label">DAMPING (ζ)</div>
+                    <div class="knob-value" id="dampingValue">0.7</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Preset Info -->
+        <div class="preset-info">
+            <h3 id="presetName">🏎️ Ferrari 488 GTB - Double Wishbone</h3>
+            <p class="preset-description" id="presetDescription">
+                Ultra-precise suspension with lightning-fast response. Minimal body roll, aggressive compression perfect for punchy drums and lead instruments.
+            </p>
+            <div class="preset-specs">
+                <div class="spec-item">
+                    <div class="spec-label">Attack Time</div>
+                    <div class="spec-value" id="specAttack">1-10 ms</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">Release Time</div>
+                    <div class="spec-value" id="specRelease">20-100 ms</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">Compression Ratio</div>
+                    <div class="spec-value" id="specRatio">4:1 - 10:1</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">Damping Coefficient</div>
+                    <div class="spec-value" id="specDamping">ζ = 0.6-0.8</div>
+                </div>
+                <div class="spec-item">
+                    <div class="spec-label">Best For</div>
+                    <div class="spec-value" id="specUsage">Drums, Lead Guitar, Synth</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p>Suspension Compressor Plugin Prototype | Inspired by Automotive Engineering</p>
+        </div>
+    </div>
+
+    <script>
+        // Suspension Presets Data
+        const SUSPENSION_PRESETS = {
+            double_wishbone: {
+                name: "🏎️ Ferrari 488 GTB - Double Wishbone",
+                description: "Ultra-precise suspension with lightning-fast response. Minimal body roll, aggressive compression perfect for punchy drums and lead instruments.",
+                specs: {
+                    attack: "1-10 ms",
+                    release: "20-100 ms",
+                    ratio: "4:1 - 10:1",
+                    damping: "ζ = 0.6-0.8",
+                    usage: "Drums, Lead Guitar, Synth"
+                },
+                params: {
+                    attack: 5,
+                    release: 80,
+                    ratio: 6,
+                    threshold: -18,
+                    knee: 20,
+                    damping: 0.7
+                }
+            },
+            macpherson: {
+                name: "🚗 Toyota Camry - MacPherson Strut",
+                description: "Quick response with moderate travel. Slight body roll provides character. Perfect for vocals and bass guitar with natural dynamics.",
+                specs: {
+                    attack: "5-30 ms",
+                    release: "50-200 ms",
+                    ratio: "2:1 - 6:1",
+                    damping: "ζ = 0.7-1.0",
+                    usage: "Vocals, Bass Guitar, Snare"
+                },
+                params: {
+                    attack: 15,
+                    release: 120,
+                    ratio: 4,
+                    threshold: -18,
+                    knee: 30,
+                    damping: 0.85
+                }
+            },
+            multi_link: {
+                name: "🏆 Porsche 911 GT3 - Multi-Link",
+                description: "Premium smooth isolation with excellent body control. Long travel for gentle compression. Ideal for mastering and vocal ballads.",
+                specs: {
+                    attack: "20-80 ms",
+                    release: "200-800 ms",
+                    ratio: "1.5:1 - 4:1",
+                    damping: "ζ = 1.2-1.5",
+                    usage: "Mastering, Ballads, Strings"
+                },
+                params: {
+                    attack: 40,
+                    release: 400,
+                    ratio: 3,
+                    threshold: -15,
+                    knee: 40,
+                    damping: 1.35
+                }
+            },
+            air_suspension: {
+                name: "💨 Mercedes S-Class - Air Suspension",
+                description: "Adaptive stiffness with self-leveling comfort. Variable parameters adjust to signal. Perfect for mix bus and dynamic vocals.",
+                specs: {
+                    attack: "10-50 ms",
+                    release: "100-500 ms",
+                    ratio: "2:1 - 8:1",
+                    damping: "Adaptive",
+                    usage: "Mix Bus, Mastering, Vocals"
+                },
+                params: {
+                    attack: 25,
+                    release: 250,
+                    ratio: 5,
+                    threshold: -20,
+                    knee: 35,
+                    damping: 1.0
+                }
+            },
+            magnetic: {
+                name: "⚡ Lamborghini Huracán - Magnetic Ride",
+                description: "Real-time damping adjustment with millisecond response. Look-ahead prediction for transparent control. Best for EDM and bass-heavy material.",
+                specs: {
+                    attack: "0.5-5 ms",
+                    release: "50-300 ms",
+                    ratio: "3:1 - 12:1",
+                    damping: "Real-time Adaptive",
+                    usage: "EDM, Bass, Mastering"
+                },
+                params: {
+                    attack: 2,
+                    release: 150,
+                    ratio: 8,
+                    threshold: -16,
+                    knee: 25,
+                    damping: 0.9
+                }
+            },
+            leaf_spring: {
+                name: "🚛 Dakar Rally Truck - Leaf Spring",
+                description: "Very stiff with long travel and bouncy character. High load capacity creates pumping effect. Creative choice for drum room mics.",
+                specs: {
+                    attack: "15-60 ms",
+                    release: "300-1000 ms",
+                    ratio: "6:1 - 20:1",
+                    damping: "ζ = 0.4-0.6",
+                    usage: "Drum Room, Parallel, FX"
+                },
+                params: {
+                    attack: 35,
+                    release: 600,
+                    ratio: 12,
+                    threshold: -22,
+                    knee: 15,
+                    damping: 0.5
+                }
+            },
+            torsion_beam: {
+                name: "🚙 Honda Civic - Torsion Beam",
+                description: "Simple and cost-effective with moderate isolation. Balanced performance for general purpose compression tasks.",
+                specs: {
+                    attack: "10-40 ms",
+                    release: "100-400 ms",
+                    ratio: "2:1 - 6:1",
+                    damping: "ζ = 0.8-1.0",
+                    usage: "General, Rhythm Guitar, Backing Vox"
+                },
+                params: {
+                    attack: 20,
+                    release: 200,
+                    ratio: 4,
+                    threshold: -18,
+                    knee: 25,
+                    damping: 0.9
+                }
+            },
+            de_dion: {
+                name: "🏁 BMW M3 - De Dion Axle",
+                description: "Precise like independent, rigid like solid axle. Fast but controlled with slight overshoot. Great for punchy snare and bass.",
+                specs: {
+                    attack: "5-20 ms",
+                    release: "80-250 ms",
+                    ratio: "3:1 - 8:1",
+                    damping: "ζ = 0.7-0.9",
+                    usage: "Snare, Bass, Lead Vocal"
+                },
+                params: {
+                    attack: 12,
+                    release: 150,
+                    ratio: 5,
+                    threshold: -17,
+                    knee: 28,
+                    damping: 0.8
+                }
+            }
+        };
+
+        // State
+        let currentSuspension = 'double_wishbone';
+        let params = { ...SUSPENSION_PRESETS.double_wishbone.params };
+        let isDragging = false;
+        let currentKnob = null;
+        let startY = 0;
+        let startValue = 0;
+
+        // DOM Elements
+        const oscilloscopeCanvas = document.getElementById('oscilloscope');
+        const ctx = oscilloscopeCanvas.getContext('2d');
+        const grFill = document.getElementById('grFill');
+        const grValue = document.getElementById('grValue');
+        const carBody = document.getElementById('carBody');
+        const spring = document.getElementById('spring');
+        const damper = document.getElementById('damper');
+        const wheel = document.getElementById('wheel');
+        const travelValue = document.getElementById('travelValue');
+        const dampingForceValue = document.getElementById('dampingValue');
+
+        // Initialize canvas size
+        function resizeCanvas() {
+            const rect = oscilloscopeCanvas.parentElement.getBoundingClientRect();
+            oscilloscopeCanvas.width = rect.width;
+            oscilloscopeCanvas.height = rect.height;
+        }
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        // Update knob visual
+        function updateKnob(knob, value, min, max) {
+            const percentage = (value - min) / (max - min);
+            const angle = -135 + percentage * 270;
+            const indicator = knob.querySelector('.knob-indicator');
+            const ring = knob.querySelector('.knob-ring');
+            
+            indicator.style.setProperty('--rotation', `${angle}deg`);
+            ring.style.setProperty('--angle', `${angle + 135}deg`);
+        }
+
+        // Initialize knobs
+        function initKnobs() {
+            const knobConfigs = {
+                attack: { min: 0.1, max: 50, unit: 'ms', display: v => `${v.toFixed(v < 1 ? 1 : 0)} ms` },
+                release: { min: 10, max: 1000, unit: 'ms', display: v => `${Math.round(v)} ms` },
+                ratio: { min: 1, max: 20, unit: ':1', display: v => `${v.toFixed(1)}:1` },
+                threshold: { min: -60, max: 0, unit: ' dB', display: v => `${v.toFixed(0)} dB` },
+                knee: { min: 0, max: 100, unit: ' dB', display: v => `${Math.round(v)} dB` },
+                damping: { min: 0.1, max: 2.0, unit: '', display: v => v.toFixed(2) }
+            };
+
+            Object.keys(knobConfigs).forEach(param => {
+                const knob = document.getElementById(`${param}Knob`);
+                const valueDisplay = document.getElementById(`${param}Value`);
+                const config = knobConfigs[param];
+                
+                updateKnob(knob, params[param], config.min, config.max);
+                valueDisplay.textContent = config.display(params[param]);
+
+                // Mouse events for knob dragging
+                knob.addEventListener('mousedown', (e) => {
+                    isDragging = true;
+                    currentKnob = { param, knob, config };
+                    startY = e.clientY;
+                    startValue = params[param];
+                    knob.style.cursor = 'grabbing';
+                });
+            });
+        }
+
+        // Global mouse events
+        document.addEventListener('mousemove', (e) => {
+            if (!isDragging || !currentKnob) return;
+            
+            const deltaY = startY - e.clientY;
+            const sensitivity = 0.5;
+            const newValue = Math.max(
+                currentKnob.config.min,
+                Math.min(currentKnob.config.max, startValue + deltaY * sensitivity)
+            );
+            
+            params[currentKnob.param] = newValue;
+            updateKnob(currentKnob.knob, newValue, currentKnob.config.min, currentKnob.config.max);
+            document.getElementById(`${currentKnob.param}Value`).textContent = 
+                currentKnob.config.display(newValue);
+        });
+
+        document.addEventListener('mouseup', () => {
+            isDragging = false;
+            currentKnob = null;
+            document.querySelectorAll('.knob').forEach(k => k.style.cursor = 'pointer');
+        });
+
+        // Suspension type selector
+        document.querySelectorAll('.suspension-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                // Update active button
+                document.querySelectorAll('.suspension-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                // Get new suspension type
+                currentSuspension = btn.dataset.type;
+                const preset = SUSPENSION_PRESETS[currentSuspension];
+                
+                // Update preset info
+                document.getElementById('presetName').textContent = preset.name;
+                document.getElementById('presetDescription').textContent = preset.description;
+                document.getElementById('specAttack').textContent = preset.specs.attack;
+                document.getElementById('specRelease').textContent = preset.specs.release;
+                document.getElementById('specRatio').textContent = preset.specs.ratio;
+                document.getElementById('specDamping').textContent = preset.specs.damping;
+                document.getElementById('specUsage').textContent = preset.specs.usage;
+                
+                // Update parameters
+                Object.keys(preset.params).forEach(param => {
+                    params[param] = preset.params[param];
+                    const knob = document.getElementById(`${param}Knob`);
+                    const config = {
+                        attack: { min: 0.1, max: 50, display: v => `${v.toFixed(v < 1 ? 1 : 0)} ms` },
+                        release: { min: 10, max: 1000, display: v => `${Math.round(v)} ms` },
+                        ratio: { min: 1, max: 20, display: v => `${v.toFixed(1)}:1` },
+                        threshold: { min: -60, max: 0, display: v => `${v.toFixed(0)} dB` },
+                        knee: { min: 0, max: 100, display: v => `${Math.round(v)} dB` },
+                        damping: { min: 0.1, max: 2.0, display: v => v.toFixed(2) }
+                    }[param];
+                    
+                    if (config) {
+                        updateKnob(knob, params[param], config.min, config.max);
+                        document.getElementById(`${param}Value`).textContent = config.display(params[param]);
+                    }
+                });
+            });
+        });
+
+        // Oscilloscope animation
+        let time = 0;
+        let gainReduction = 0;
+        let targetGainReduction = 0;
+
+        function drawOscilloscope() {
+            const width = oscilloscopeCanvas.width;
+            const height = oscilloscopeCanvas.height;
+            
+            ctx.fillStyle = '#0a0a0a';
+            ctx.fillRect(0, 0, width, height);
+            
+            // Grid lines
+            ctx.strokeStyle = '#1a1a1a';
+            ctx.lineWidth = 1;
+            for (let i = 0; i < width; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(i, 0);
+                ctx.lineTo(i, height);
+                ctx.stroke();
+            }
+            for (let i = 0; i < height; i += 50) {
+                ctx.beginPath();
+                ctx.moveTo(0, i);
+                ctx.lineTo(width, i);
+                ctx.stroke();
+            }
+            
+            // Generate simulated audio signal
+            const inputSignal = [];
+            const outputSignal = [];
+            const numPoints = width;
+            
+            for (let x = 0; x < numPoints; x++) {
+                const t = time + x * 0.01;
+                // Complex waveform with multiple frequencies
+                const input = Math.sin(t * 2) * 0.5 + 
+                             Math.sin(t * 5) * 0.3 + 
+                             Math.sin(t * 10) * 0.2 +
+                             Math.random() * 0.1;
+                
+                // Simulate compression
+                const threshold = params.threshold / 20;
+                const ratio = params.ratio;
+                let output = input;
+                
+                if (input > threshold) {
+                    output = threshold + (input - threshold) / ratio;
+                }
+                
+                inputSignal.push({ x, y: height/2 - input * height * 0.4 });
+                outputSignal.push({ x, y: height/2 - output * height * 0.4 });
+            }
+            
+            // Draw input signal (blue)
+            ctx.strokeStyle = '#0066cc';
+            ctx.lineWidth = 2;
+            ctx.shadowColor = '#0066cc';
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            inputSignal.forEach((point, i) => {
+                if (i === 0) ctx.moveTo(point.x, point.y);
+                else ctx.lineTo(point.x, point.y);
+            });
+            ctx.stroke();
+            
+            // Draw output signal (green)
+            ctx.strokeStyle = '#00cc66';
+            ctx.shadowColor = '#00cc66';
+            ctx.beginPath();
+            outputSignal.forEach((point, i) => {
+                if (i === 0) ctx.moveTo(point.x, point.y);
+                else ctx.lineTo(point.x, point.y);
+            });
+            ctx.stroke();
+            
+            ctx.shadowBlur = 0;
+            
+            // Calculate gain reduction
+            targetGainReduction = Math.abs(Math.sin(time * 2)) * 12 * (params.ratio / 6);
+            gainReduction += (targetGainReduction - gainReduction) * 0.1;
+            
+            // Update GR meter
+            const grPercentage = Math.min(100, (gainReduction / 20) * 100);
+            grFill.style.width = `${grPercentage}%`;
+            grValue.textContent = `-${gainReduction.toFixed(1)} dB`;
+            
+            time += 0.05;
+        }
+
+        // Suspension animation
+        let suspensionPosition = 0;
+        let suspensionVelocity = 0;
+
+        function animateSuspension() {
+            // Simulate road input
+            const roadInput = Math.sin(time * 3) * 20 + Math.sin(time * 7) * 10;
+            
+            // Mass-spring-damper physics
+            const mass = 1.0;
+            const springConstant = 100 * params.damping;
+            const dampingCoeff = params.damping * 10;
+            
+            const force = roadInput;
+            const acceleration = (force - dampingCoeff * suspensionVelocity - springConstant * suspensionPosition) / mass;
+            
+            suspensionVelocity += acceleration * 0.016;
+            suspensionPosition += suspensionVelocity * 0.016;
+            
+            // Apply to visuals
+            const baseTop = 50;
+            const maxTravel = 30;
+            const carTop = baseTop + suspensionPosition * 0.5;
+            carBody.style.top = `${Math.max(30, Math.min(80, carTop))}px`;
+            
+            const springHeight = 80 - suspensionPosition * 0.3;
+            spring.style.height = `${Math.max(50, Math.min(100, springHeight))}px`;
+            
+            const damperHeight = 80 - suspensionPosition * 0.3;
+            damper.style.height = `${Math.max(50, Math.min(100, damperHeight))}px`;
+            
+            // Wheel follows road input
+            wheel.style.bottom = `${50 + Math.max(0, -roadInput)}px`;
+            
+            // Update stats
+            const travel = Math.abs(suspensionPosition) * 2;
+            travelValue.textContent = `${travel.toFixed(1)} mm`;
+            
+            const dampingForce = Math.abs(suspensionVelocity) * params.damping * 10;
+            dampingForceValue.textContent = `${Math.min(100, dampingForce).toFixed(0)}%`;
+        }
+
+        // Animation loop
+        function animate() {
+            drawOscilloscope();
+            animateSuspension();
+            requestAnimationFrame(animate);
+        }
+
+        // Initialize
+        initKnobs();
+        animate();
+    </script>
+</body>
+</html>
