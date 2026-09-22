@@ -75,7 +75,15 @@ void SuspensionCompressorAudioProcessorEditor::RotaryKnob::paint(juce::Graphics&
 SuspensionCompressorAudioProcessorEditor::SuspensionCompressorAudioProcessorEditor(SuspensionCompressorAudioProcessor& p)
     : AudioProcessorEditor(&p), audioProcessor(p)
 {
+    juce::File logFile = juce::File::getSpecialLocation(juce::File::tempDirectory)
+        .getChildFile("suspension_gui_debug.txt");
+    logFile.appendText("editor constructor entered\n", false, false);
+
     setSize (800, 500);
+    centreWithSize (800, 500);
+    setResizable (false, false);
+    setOpaque (true);
+    setVisible (true);
     setLookAndFeel(&juce::LookAndFeel_V4::getDefaultLookAndFeel());
     
     // Title

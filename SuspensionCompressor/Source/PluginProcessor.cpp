@@ -247,6 +247,9 @@ void SuspensionCompressorAudioProcessor::processBlock(juce::AudioBuffer<float>& 
 //==============================================================================
 juce::AudioProcessorEditor* SuspensionCompressorAudioProcessor::createEditor()
 {
+    juce::File logFile = juce::File::getSpecialLocation(juce::File::tempDirectory)
+        .getChildFile("suspension_gui_debug.txt");
+    logFile.appendText("createEditor called\n", false, false);
     return new SuspensionCompressorAudioProcessorEditor(*this);
 }
 
